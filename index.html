@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Hello!</title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    
+    <!-- import the webpage's stylesheet -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/font-awesome.min.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+    
+    <!-- AR libs -->
+    <script src="js/aframe.min.js"></script>
+    <script src="js/aframe-ar.js"> </script>
+    
+    <script src="js/jquery-1.9.1.min.js"></script>
+    <script src="js/merge-images.js"></script>
+    
+    <!-- interactive drag and resize -->
+    <script src="js/interact.min.js"></script>
+  
+    <script src="js/html2canvas.js"></script>
+  </head>  
+  
+  <body>
+
+        <div id="myModal" class="modal" data-html2canvas-ignore>
+          <span class="close">&times;</span>
+          <img id="myImg" class="modal-content" />
+          <button class="btn btn-info btn-save" id="save"><i class="fa fa-save"></i> Save</button>
+        </div>
+
+        <div class="wrapper" data-html2canvas-ignore>
+          <button class="btn btn-lg btn-danger center" onclick="capture(event);"> 
+                <i class="fa fa-camera"></i> Capture
+          </button>
+        </div>
+
+        <div class="switch_btn" data-html2canvas-ignore>
+          <button class="btn btn-lg btn-info center" onclick="switch_camera(event);"> 
+                <i class="fa fa-refresh"></i>
+          </button>
+        </div>
+    
+        <a-scene arjs="sourceType: webcam; debugUIEnabled: false;" screenshot="width: 640; height: 320" vr-mode-ui="enabled: false" class="ascene">
+            <a-entity camera="active: true" position="0 0 0" data-aframe-default-camera id="camera"></a-entity>
+        </a-scene>
+
+        <div class="mask_container">
+          <img class="resize_drag" id="resize_drag" src="assets/mask_hacker.png" />
+          
+        </div>
+
+        <img class="camera_image" id="camera_image"/>
+
+    <script>
+      
+        var dataURL = '';
+        /*
+        function getBase64Image(img) {
+          var canvas = document.createElement("canvas");
+          canvas.width = img.width;
+          canvas.height = img.height;
+          var contex = canvas.getContext("2d");
+          contex.drawImage(img, 0, 0);
+          return canvas.toDataURL("image/png");
+          //return url.replace(/^data:image\/(png|jpg);base64,/, "");
+        }
+
+        function merge(frame, img2){
+          var im1 = document.getElementById('hide_img');
+          im1.setAttribute('src', frame.dataUri);
+
+          var canvas = document.createElement("canvas");
+          canvas.width = frame.width;
+          canvas.height = frame.height;
+          
+          var contex = canvas.getContext("2d");
+
+          contex.drawImage(im1, 0, 0, canvas.width, canvas.height);
+          //contex.drawImage(img2, 0, 0, img2.width, img2.height);
+          return canvas.toDataURL("image/png");
+        }
+        */
+        function capture(event){
+          event.preventDefault();
+          /*
+          var video = document.querySelector("video");
+          var canvas = document.querySelector("canvas");
+          //canvas.width = video.videoWidth;
+          //canvas.height = video.videoHeight;
+          canvas.getContext('2d').drawImage(video, 0, 0);
+
+          var can = document.querySelector('a-scene').components.screenshot.getCanvas('perspective');
+          var url = can.toDataURL("image/png");
+          var a  = document.createElement('a');
+          a.href = url;
+          console.log(url);
+          a.download = 'screenshot-' + document.title.toLowerCase() + '-' + Date.now() + '.png';
+          a.click();
+          */
+
+          let frame = getARVideo("video", "png");
+          var hidden_img = document.getElementById("camera_image");
+          //hidden_img.setAttribute("class", "camera_image");
+          hidden_img.setAttribute("src", frame.dataUri);
+          hidden_img.setAttribute("width", frame.width);
+          hidden_img.setAttribute("height", frame.height);
+          //hidden_img.setAttribute("style", "display:none;");
+          
+          html2canvas(document.body, {logging:false}).then(function(canvas) {
+              dataURL = canvas.toDataURL("image/png");
+
+              //var a  = document.createElement('a');
+              //a.href = dataURL;
+              //a.download = 'screenshot-' + document.title.toLowerCase() + '-' + Date.now() + '.png';
+              //a.click();
+
+              var image = document.getElementById('myImg');
+              image.setAttribute('src', dataURL);
+              //image.setAttribute("width", frame.width);
+              //image.setAttribute("height", frame.height);
+
+              var modal = document.getElementById('myModal');
+              var span = document.getElementsByClassName("close")[0];
+              modal.style.display = "block";
+              span.onclick = function() { 
+                modal.style.display = "none";
+              }
+
+              document.getElementById("camera_image").removeAttribute("src").setAttribute("style","display:none;");
+              
+          });
+          $('video:not(first-child)').remove();
+          //$('video').trigger('play');
+
+
+          // first get the image of the ascene layer canvas
+          
+          //let aScene = document.querySelector("a-scene").components.screenshot.getCanvas("perspective");
+          /*
+          // then get the video layer canvas
+          let frame = getARVideo("video", "png");
+          // resize the ascene to the video scene
+          //aScene = resizeCanvas(aScene, frame.width, frame.height);
+          // then merge the two base64 image using https://github.com/lukechilds/merge-images
+          //var mask = getBase64Image(document.getElementById("resize_drag"));
+          
+          var x = merge(frame, document.getElementById("resize_drag"));
+          var a  = document.createElement('a');
+          a.href = x;
+          a.download = 'screenshot-' + document.title.toLowerCase() + '-' + Date.now() + '.png';
+          a.click();
+          */
+          /*
+          mergeImages([frame.dataUri, mask]).then(b64 => {
+              var a  = document.createElement('a');
+              a.href = b64;
+              a.download = 'screenshot-' + document.title.toLowerCase() + '-' + Date.now() + '.png';
+              a.click();
+          });
+          */
+        }
+
+        //save screenshoot
+        document.getElementById("save").addEventListener("click", function(e){
+          var a  = document.createElement('a');
+          a.href = dataURL;
+          a.download = 'screenshot-' + document.title.toLowerCase() + '-' + Date.now() + '.png';
+          a.click();
+        });
+
+        function resizeCanvas(origCanvas, width, height) {
+            let resizedCanvas = document.createElement("canvas");
+            let resizedContext = resizedCanvas.getContext("2d");
+
+            resizedCanvas.height = height;
+            resizedCanvas.width = width;
+
+            if (width > height) {
+                // Landscape
+                resizedContext.drawImage(origCanvas, 0, 0, width, height);
+            } else {
+                // Portrait
+                var scale = height / width;
+                var scaledHeight = origCanvas.width * scale;
+                var scaledWidth = origCanvas.height * scale;
+                var marginLeft = ( origCanvas.width - scaledWidth) / 2;
+                resizedContext.drawImage(origCanvas, marginLeft, 0, scaledWidth, scaledHeight);
+            }
+
+            return resizedCanvas.toDataURL();
+        }
+
+        function getARVideo(video, format) {
+            video = document.querySelector(video);
+
+            var canvas = document.createElement("canvas");
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+
+            return {dataUri: canvas.toDataURL('image/' + format), width:canvas.width, height:canvas.height};
+        };
+
+        function dragMoveListener (event) {
+          var target = event.target,
+              // keep the dragged position in the data-x/data-y attributes
+              x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx,
+              y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+
+          // translate the element
+          target.style.webkitTransform = target.style.transform = 'translate(' + x + 'px, ' + y + 'px)';
+
+          // update the posiion attributes
+          target.setAttribute('data-x', x);
+          target.setAttribute('data-y', y);
+        }
+        window.dragMoveListener = dragMoveListener;
+      
+        // resize and drag mask
+        interact('.resize_drag')
+          .draggable({
+              inertia: true,
+              onmove: window.dragMoveListener,
+              restrict: {
+                restriction: 'parent',
+                elementRect: { top: 0, left: 0, bottom: 1, right: 1 }
+              },
+          })
+          .resizable({
+              // resize from all edges and corners
+              edges: { left: true, right: true, bottom: true, top: true },
+
+              // keep the edges inside the parent
+              restrictEdges: {
+                outer: 'parent',
+                endOnly: true,
+              },
+
+              // minimum size
+              restrictSize: {
+                min: { width: 100, height: 50 },
+              },
+
+              inertia: true,
+          })
+          .on('resizemove', function (event) {
+              var target = event.target,
+                  x = (parseFloat(target.getAttribute('data-x')) || 0),
+                  y = (parseFloat(target.getAttribute('data-y')) || 0);
+
+              // update the element's style
+              target.style.width  = event.rect.width + 'px';
+              target.style.height = event.rect.height + 'px';
+
+              // translate when resizing from top or left edges
+              x += event.deltaRect.left;
+              y += event.deltaRect.top;
+
+              target.style.webkitTransform = target.style.transform =
+                  'translate(' + x + 'px,' + y + 'px)';
+
+              target.setAttribute('data-x', x);
+              target.setAttribute('data-y', y);
+              target.textContent = Math.round(event.rect.width) + '\u00D7' + Math.round(event.rect.height);
+        });
+
+        var is_front = false;
+        function switch_camera(event){
+          is_front = ! is_front;
+          var video = document.querySelector('video');
+          navigator.mediaDevices.enumerateDevices().then(devices => {
+                  var videoDevices = [0,0];
+                  var videoDeviceIndex = 0;
+                  devices.forEach(function(device) {
+                      //console.log(device.kind + ": " + device.label +  " id = " + device.deviceId);
+                      if (device.kind == "videoinput") {  
+                        videoDevices[videoDeviceIndex++] =  device.deviceId;    
+                      }
+                  });
+
+                  var constraints =  {//width: { min: 1024, ideal: 1280, max: 1920 },
+                  //height: { min: 776, ideal: 720, max: 1080 },
+                                    deviceId: { exact: is_front?videoDevices[1]:videoDevices[0]} 
+                  };
+                return navigator.mediaDevices.getUserMedia({ video: constraints });
+
+              }).then(stream => {
+                  if (window.webkitURL) {
+                    video.src = window.webkitURL.createObjectURL(stream);
+                    localMediaStream = stream;
+                  } else if (video.mozSrcObject !== undefined) {
+                    video.mozSrcObject = stream;
+                  } else if (video.srcObject !== undefined) {
+                    video.srcObject = stream;
+                  } else {
+                    video.src = stream;
+                  }})
+                .catch(e => {
+                  console.error(e);
+                  //console.log('lll');
+                });
+
+        }
+        /*
+        // Switch camera
+        var videoElement = document.querySelector('video');
+        var videoSelect = document.querySelector('select#videoSource');
+
+        navigator.mediaDevices.enumerateDevices().then(gotDevices).then(getStream).catch(handleError);
+        
+        function gotDevices(deviceInfos) {
+          for (var i = 0; i !== deviceInfos.length; ++i) {
+            var deviceInfo = deviceInfos[i];
+            if (deviceInfo.kind === 'videoinput') {
+                
+            } else {
+              console.log('Found one other kind of source/device: ', deviceInfo);
+            }
+          }
+        }
+
+        function getStream(device_id) {
+            if (window.stream) {
+              window.stream.getTracks().forEach(function(track) {
+                track.stop();
+              });
+            }
+
+            var constraints = {
+              video: {
+                deviceId: {exact: videoSelect.value}
+              }
+            };
+
+            navigator.mediaDevices.getUserMedia(constraints).then(gotStream).catch(handleError);
+        }
+
+        function gotStream(stream) {
+          window.stream = stream; // make stream available to console
+          videoElement.srcObject = stream;
+        }
+
+        function handleError(error) {
+          console.log('Error: ', error);
+        }
+        */
+    </script>
+  </body>
+</html>
