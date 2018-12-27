@@ -4,7 +4,7 @@
     <title>Hello!</title>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1, maximum-scale=1">
     
     <!-- import the webpage's stylesheet -->
     <link href="css/bootstrap.min.css" rel="stylesheet">
@@ -21,7 +21,7 @@
     <!-- interactive drag and resize -->
     <script src="js/interact.min.js"></script>
   
-    <script src="js/html2canvas.js"></script>
+    <script src="js/xhtml2canvas.min.js"></script>
   </head>  
   
   <body>
@@ -49,7 +49,10 @@
         </a-scene>
 
         <div class="mask_container">
-          <img class="resize_drag" id="resize_drag" src="assets/mask_hacker.png"><span style="width:30px;height: 30px;background-color:red;z-index: 31;"></span></img>
+            <div class="resize_drag" id="resize_drag">
+              <div class="btn_scale"></div>
+              <div class="btn_rotate"></div>
+            </div>
         </div>
 
         <img class="camera_image" id="camera_image"/>
@@ -57,113 +60,59 @@
     <script>
       
         var dataURL = '';
-        /*
-        function getBase64Image(img) {
-          var canvas = document.createElement("canvas");
-          canvas.width = img.width;
-          canvas.height = img.height;
-          var contex = canvas.getContext("2d");
-          contex.drawImage(img, 0, 0);
-          return canvas.toDataURL("image/png");
-          //return url.replace(/^data:image\/(png|jpg);base64,/, "");
-        }
 
-        function merge(frame, img2){
-          var im1 = document.getElementById('hide_img');
-          im1.setAttribute('src', frame.dataUri);
 
-          var canvas = document.createElement("canvas");
-          canvas.width = frame.width;
-          canvas.height = frame.height;
-          
-          var contex = canvas.getContext("2d");
+        $("#resize_drag").mouseover(function(){
+          $(".btn_scale").css("display", "block");
+          $(".btn_rotate").css("display", "block");
+        });
 
-          contex.drawImage(im1, 0, 0, canvas.width, canvas.height);
-          //contex.drawImage(img2, 0, 0, img2.width, img2.height);
-          return canvas.toDataURL("image/png");
-        }
-        */
+        $("#resize_drag").mouseout(function(){
+          $(".btn_scale").css("display", "none");
+          $(".btn_rotate").css("display", "none");
+        });
+
+        // screenshot
         function capture(event){
-          event.preventDefault();
-          /*
-          var video = document.querySelector("video");
-          var canvas = document.querySelector("canvas");
-          //canvas.width = video.videoWidth;
-          //canvas.height = video.videoHeight;
-          canvas.getContext('2d').drawImage(video, 0, 0);
+            event.preventDefault();
 
-          var can = document.querySelector('a-scene').components.screenshot.getCanvas('perspective');
-          var url = can.toDataURL("image/png");
-          var a  = document.createElement('a');
-          a.href = url;
-          console.log(url);
-          a.download = 'screenshot-' + document.title.toLowerCase() + '-' + Date.now() + '.png';
-          a.click();
-          */
+            // a temp image from the camera
+            let frame = getARVideo("video", "png");
+            var hidden_img = document.getElementById("camera_image");
+            //hidden_img.setAttribute("class", "camera_image");
+            hidden_img.setAttribute("src", frame.dataUri);
+            hidden_img.setAttribute("width", frame.width);
+            hidden_img.setAttribute("height", frame.height);
+            //hidden_img.setAttribute("style", "display:none;");
+            
+            // render body => canvas
+            html2canvas(document.body, {logging:false, onclone: function(doc) {
+              //document.getElementById("camera_image").style.display="block";
+            }}).then(function(canvas) {
+                dataURL = canvas.toDataURL("image/png");
 
-          let frame = getARVideo("video", "png");
-          var hidden_img = document.getElementById("camera_image");
-          //hidden_img.setAttribute("class", "camera_image");
-          hidden_img.setAttribute("src", frame.dataUri);
-          hidden_img.setAttribute("width", frame.width);
-          hidden_img.setAttribute("height", frame.height);
-          //hidden_img.setAttribute("style", "display:none;");
-          
-          html2canvas(document.body, {logging:false}).then(function(canvas) {
-              dataURL = canvas.toDataURL("image/png");
+                // set image to display on the modal
+                var image = document.getElementById('myImg');
+                image.setAttribute('src', dataURL);
+                //image.setAttribute("width", frame.width);
+                //image.setAttribute("height", frame.height);
+                var modal = document.getElementById('myModal');
+                modal.style.display = "block";
+                var span = document.getElementsByClassName("close")[0];
+                span.onclick = function() { 
+                  modal.style.display = "none";
+                }
 
-              //var a  = document.createElement('a');
-              //a.href = dataURL;
-              //a.download = 'screenshot-' + document.title.toLowerCase() + '-' + Date.now() + '.png';
-              //a.click();
+                // remove the temp image
+                document.getElementById("camera_image").removeAttribute("src").setAttribute("style","display:none;");
+            });
 
-              var image = document.getElementById('myImg');
-              image.setAttribute('src', dataURL);
-              //image.setAttribute("width", frame.width);
-              //image.setAttribute("height", frame.height);
-
-              var modal = document.getElementById('myModal');
-              var span = document.getElementsByClassName("close")[0];
-              modal.style.display = "block";
-              span.onclick = function() { 
-                modal.style.display = "none";
-              }
-
-              document.getElementById("camera_image").removeAttribute("src").setAttribute("style","display:none;");
-              
-          });
-          $('video:not(first-child)').remove();
-          //$('video').trigger('play');
-
-
-          // first get the image of the ascene layer canvas
-          
-          //let aScene = document.querySelector("a-scene").components.screenshot.getCanvas("perspective");
-          /*
-          // then get the video layer canvas
-          let frame = getARVideo("video", "png");
-          // resize the ascene to the video scene
-          //aScene = resizeCanvas(aScene, frame.width, frame.height);
-          // then merge the two base64 image using https://github.com/lukechilds/merge-images
-          //var mask = getBase64Image(document.getElementById("resize_drag"));
-          
-          var x = merge(frame, document.getElementById("resize_drag"));
-          var a  = document.createElement('a');
-          a.href = x;
-          a.download = 'screenshot-' + document.title.toLowerCase() + '-' + Date.now() + '.png';
-          a.click();
-          */
-          /*
-          mergeImages([frame.dataUri, mask]).then(b64 => {
-              var a  = document.createElement('a');
-              a.href = b64;
-              a.download = 'screenshot-' + document.title.toLowerCase() + '-' + Date.now() + '.png';
-              a.click();
-          });
-          */
+            // remove created video tags
+            $('video:not(first-child)').remove();
         }
 
-        //save screenshoot
+
+        //save the screenshot
         document.getElementById("save").addEventListener("click", function(e){
           var a  = document.createElement('a');
           a.href = dataURL;
@@ -171,6 +120,7 @@
           a.click();
         });
 
+        /*
         function resizeCanvas(origCanvas, width, height) {
             let resizedCanvas = document.createElement("canvas");
             let resizedContext = resizedCanvas.getContext("2d");
@@ -191,8 +141,9 @@
             }
 
             return resizedCanvas.toDataURL();
-        }
+        }*/
 
+        // get an base64 image from the camera
         function getARVideo(video, format) {
             video = document.querySelector(video);
 
@@ -204,6 +155,7 @@
             return {dataUri: canvas.toDataURL('image/' + format), width:canvas.width, height:canvas.height};
         };
 
+        // foreground event listeners
         function dragMoveListener (event) {
           var target = event.target,
               // keep the dragged position in the data-x/data-y attributes
@@ -236,6 +188,8 @@
               onmove: function (event) {
                 var target = event.target;
                 angle += event.da;
+                console.log(angle);
+
                 target.style.webkitTransform =
                 target.style.transform =
                   'rotate(' + angle + 'deg)';
@@ -248,10 +202,10 @@
               // resize from all edges and corners
               preserveAspectRatio: true,
               edges: { 
-                      left: true,
-                      right: true,
-                      bottom: true,
-                      top: true
+                      left: '.btn_scale',
+                      right: '.btn_scale',
+                      bottom: '.btn_scale',
+                      top: '.btn_scale'
               },
 
               // keep the edges inside the parent
@@ -262,7 +216,7 @@
 
               // minimum size
               restrictSize: {
-                min: { width: 100, height: 50 },
+                min: { width: 100, height:100 },
               },
 
               inertia: true,
@@ -284,7 +238,7 @@
 
               target.setAttribute('data-x', x);
               target.setAttribute('data-y', y);
-              target.textContent = Math.round(event.rect.width) + '\u00D7' + Math.round(event.rect.height);
+              //target.textContent = Math.round(event.rect.width) + '\u00D7' + Math.round(event.rect.height);
         });
 
 
