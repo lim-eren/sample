@@ -49,8 +49,7 @@
         </a-scene>
 
         <div class="mask_container">
-          <img class="resize_drag" id="resize_drag" src="assets/mask_hacker.png" />
-          
+          <img class="resize_drag" id="resize_drag" src="assets/mask_hacker.png"><span style="width:30px;height: 30px;background-color:red;z-index: 31;"></span></img>
         </div>
 
         <img class="camera_image" id="camera_image"/>
@@ -230,9 +229,30 @@
                 elementRect: { top: 0, left: 0, bottom: 1, right: 1 }
               },
           })
+          .gesturable({
+              onstart: function (event) {
+                
+              },
+              onmove: function (event) {
+                var target = event.target;
+                angle += event.da;
+                target.style.webkitTransform =
+                target.style.transform =
+                  'rotate(' + angle + 'deg)';
+              },
+              onend: function (event) {
+                
+              }
+          })
           .resizable({
               // resize from all edges and corners
-              edges: { left: true, right: true, bottom: true, top: true },
+              preserveAspectRatio: true,
+              edges: { 
+                      left: true,
+                      right: true,
+                      bottom: true,
+                      top: true
+              },
 
               // keep the edges inside the parent
               restrictEdges: {
@@ -246,8 +266,7 @@
               },
 
               inertia: true,
-          })
-          .on('resizemove', function (event) {
+          }).on('resizemove', function (event) {
               var target = event.target,
                   x = (parseFloat(target.getAttribute('data-x')) || 0),
                   y = (parseFloat(target.getAttribute('data-y')) || 0);
@@ -267,6 +286,7 @@
               target.setAttribute('data-y', y);
               target.textContent = Math.round(event.rect.width) + '\u00D7' + Math.round(event.rect.height);
         });
+
 
         var is_front = false;
         function switch_camera(event){
